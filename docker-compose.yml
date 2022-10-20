@@ -43,7 +43,7 @@ services:
     ports:
       - "8080:80" 
     build:
-      context: ./Sc/MinimalApi
+      context: ./sc/be
     environment:
       DevenvConnectionString: "Server=database;Port=3306;Uid=root;Pwd=secret;Database=userdb;sslmode=none;"
     restart: always
@@ -56,7 +56,7 @@ services:
     expose:
       - 80
     build:
-      context: ./Sc/MinimalFrontend
+      context: ./sc/fe
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
