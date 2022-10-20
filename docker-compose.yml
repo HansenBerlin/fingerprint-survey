@@ -1,0 +1,75 @@
+version: "3.7"
+services:
+  nginx:
+    container_name: nginx
+    expose:
+      - 443
+    ports:
+      - "443:443"      
+    volumes:
+      - "./nginx/conf/:/etc/nginx/conf.d/:rw"
+    networks:
+      - frontend-production
+    build:
+      context: ./nginx
+    depends_on:
+      - api
+      - frontend
+    restart: always
+    command: [nginx-debug, '-g', 'daemon off;']
+
+  database:
+    container_name: database
+    image: mariadb:latest
+    expose:
+      - 3306
+    volumes:
+      - ./db/data:/var/lib/mysql:rw
+      - ./db/init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      MARIADB_ROOT_PASSWORD: secret
+      MARIADB_USER: user
+      MARIADB_PASSWORD: pass
+    networks:
+      - backend-production
+    restart: always
+
+  api:
+    container_name: api
+    expose:
+      - 80
+    networks:
+      - backend-production
+    ports:
+      - "8080:80" 
+    build:
+      context: ./Sc/MinimalApi
+    environment:
+      DevenvConnectionString: "Server=database;Port=3306;Uid=root;Pwd=secret;Database=userdb;sslmode=none;"
+    restart: always
+
+  frontend:
+    container_name: frontend
+    networks:
+      - backend-production
+      - frontend-production
+    expose:
+      - 80
+    build:
+      context: ./Sc/MinimalFrontend
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      UsersEndpoint: "http://api/users"
+  
+
+networks:
+  backend-production:
+    name: backend-nw-production
+    driver: bridge
+  frontend-production:
+    name: frontend-nw-production
+    driver: bridge
+  
+
+         

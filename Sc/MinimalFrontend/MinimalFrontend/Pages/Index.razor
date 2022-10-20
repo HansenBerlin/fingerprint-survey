@@ -1,0 +1,100 @@
+@page "/"
+@using Microsoft.AspNetCore.Components
+@using fingerprint.Models
+@using MinimalFrontend.Controller
+@inject IMBToastService ToastService
+@inject IJSRuntime JS
+@inject IUserRepositoryController UserRepositoryController
+
+
+<div style="width: 60%; margin: 5% auto auto;">
+        <div class="mdc-layout-grid__cell--span-6-desktop mdc-layout-grid__cell--span-4-tablet mdc-layout-grid__cell--span-4-phone">
+            <MBCard AutoStyled="true">
+                <Primary>
+                    <h3 class="mb-card__title mdc-typography mdc-typography--headline6" style="text-align: center; margin-bottom: 10px;">
+                        Umfrage :-) Alle Antworten beziehen sich auf die Arbeit, also nicht Hochschule oder privat.
+                    </h3>
+                    <EditForm Model="@Model">
+                        <DataAnnotationsValidator />
+                        <div class="mdc-layout-grid__inner">
+                            <div class="mdc-layout-grid__cell--span-12" style="margin-top: 6px; text-align: center;">
+                                    <p class="mdc-typography--body1">Welchen dieser Kommunikationskanäle verwendest du am häufigsten (zeitlich gesehen)</p>
+                                <MBSelect @bind-Value="@Model.DropdownSelectionType"
+                                          style="min-width: 90%"
+                                          Items="Model.TypeOfContact"
+                                          ItemValidation="@MBItemValidation.NoSelection"
+                                          Label="Kommunikationskanal"/>
+                            </div>
+                            
+                            <div class="mdc-layout-grid__cell--span-12" style="margin-top: 6px; text-align: center;">
+                                    <p class="mdc-typography--body1">Wie oft kommuniziert ihr über digitale Kanäle (Videokonferenz, Mail etc.)?</p>
+                                <MBSelect @bind-Value="@Model.DropdownSelectionIntensity"
+                                          Items="Model.IntensityOfContact"
+                                          style="min-width: 90%"
+                                          ItemValidation="@MBItemValidation.NoSelection"
+                                          Label="Intensität (Ist)" />
+                            </div>
+                            <div class="mdc-layout-grid__cell--span-12" style="margin-top: 6px; text-align: center;">
+                                    <p class="mdc-typography--body1">In Bezug Auf Frage 2: Würdest du gerne mehr oder weniger über digitale Kanäle kommunizieren?</p>
+                                <MBSelect @bind-Value="@Model.DropdownSelectionWishes"
+                                          Items="Model.IntensityWishes"
+                                          style="min-width: 90%"
+                                          ItemValidation="@MBItemValidation.NoSelection"
+                                          Label="Intensität (Wunsch)" />
+                            </div>
+                            <div class="mdc-layout-grid__cell--span-12" style="margin-top: 6px; text-align: center;">
+                                    <p class="mdc-typography--body1">Würdest du sagen, dass deinem Arbeitgeber ein hohes Maß an Kontrolle über das, was du tust, wichtig ist?</p>
+                                <MBSelect @bind-Value="@Model.DropdownSelectionProblem"
+                                          Items="Model.ProblemsWithContact"
+                                          style="min-width: 90%"
+                                          ItemValidation="@MBItemValidation.NoSelection"
+                                          Label="Kontrolle durch AG" />
+                            </div>
+                            <div class="mdc-layout-grid__cell--span-12" style="text-align: center;">
+                                <MBButton Label="ABSCHICKEN"
+                                          ButtonStyle="@MBButtonStyle.ContainedRaised"
+                                          style="margin: auto; width: 50%" 
+                                          @onclick="@(async () => await ButtonSubmitClick())"
+                                          type="submit" />
+                            </div>
+                        </div>
+                    </EditForm>
+                </Primary>
+            </MBCard>
+        </div>
+</div>
+
+@code {
+
+    private DotNetObjectReference<Index> _dotnetObjReference;
+    private FormModel Model { get; set; } = new();
+    private static string test;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotnetObjReference = DotNetObjectReference.Create(this);
+        }
+    }
+
+    private async Task ButtonSubmitClick()
+    {
+        await JS.InvokeAsync<string>("test", _dotnetObjReference);
+    }
+        
+    [JSInvokable]
+    public async Task CallbackJs(string data)
+    {
+        var user = new UserModel
+        {
+            UiD = data,
+            CommunicationType = Model.DropdownSelectionType,
+            IntensityReal = Model.DropdownSelectionIntensity,
+            IntensityWish = Model.DropdownSelectionWishes,
+            Control = Model.DropdownSelectionProblem
+        };
+        await UserRepositoryController.Create(user);
+        ToastService.ShowToast(heading: "Hello...", message: data, level: MBToastLevel.Success, showIcon: false);
+    }
+}
