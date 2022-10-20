@@ -1,23 +1,5 @@
 version: "3.7"
 services:
-  nginx:
-    container_name: nginx
-    expose:
-      - 443
-    ports:
-      - "443:443"      
-    volumes:
-      - "./nginx/conf/:/etc/nginx/conf.d/:rw"
-    networks:
-      - frontend-production
-    build:
-      context: ./nginx
-    depends_on:
-      - api
-      - frontend
-    restart: always
-    command: [nginx-debug, '-g', 'daemon off;']
-
   database:
     container_name: database
     image: mariadb:latest
@@ -41,7 +23,7 @@ services:
     networks:
       - backend-production
     ports:
-      - "8080:80" 
+      - "8081:80" 
     build:
       context: ./sc/be
     environment:
@@ -55,6 +37,8 @@ services:
       - frontend-production
     expose:
       - 80
+    ports:
+      - 8080:80
     build:
       context: ./sc/fe
     restart: always
